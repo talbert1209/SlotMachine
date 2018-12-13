@@ -34,10 +34,10 @@
             <br />
             <br />
             <strong><span class="auto-style1">Rules:</span></strong><br />
-            1 Cherry - x2 Your Bet<br />
-            2 Cherries - x3 Your Bet<br />
-            3 Cherries - x4 Your Bet<br />
-            3 7&#39;s - Jackpot - x100 Your Bet<br />
+            1. Cherry - x2 Your Bet<br />
+            2. Cherries - x3 Your Bet<br />
+            3. Cherries - x4 Your Bet<br />
+            4. 7&#39;s - Jackpot - x100 Your Bet<br />
             HOWEVER... if there&#39;s even one BAR you win nothing</div>
     </form>
 </body>
