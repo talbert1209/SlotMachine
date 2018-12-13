@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using System.Linq;
 using System.Web;
 using System.Web.UI;
-using System.Web.UI.WebControls;
+using Image = System.Web.UI.WebControls.Image;
 
 namespace SlotMachine
 {
@@ -23,18 +25,43 @@ namespace SlotMachine
 
         protected void pullLeverButton_Click(object sender, EventArgs e)
         {
+            if (!VerifyBet())
+            {
+                return;
+            }
             PullLever();
         }
+        
+        // Helper Methods
+        private bool VerifyBetIsMoney()
+        {
+            return decimal.TryParse(betTextBox.Text, out var betResult);
+        }
 
-        //Helper Methods
+        private bool VerifyBet()
+        {
+            resultLabel.ForeColor = Color.Red;
+            if (!VerifyBetIsMoney())
+            {
+                resultLabel.Text = $"{betTextBox.Text} is not a valid bet. Please enter a valid bet!";
+                return false;
+            }
+
+            if (decimal.Parse(betTextBox.Text) > playersMoney)
+            {
+                resultLabel.Text =
+                    $"You don't have {decimal.Parse(betTextBox.Text):C} to bet. Please enter an amount less than {playersMoney:C}";
+                return false;
+            }
+
+            return true;
+        }
+
         private void PullLever()
         {
-            // randomly generate 3 images
+            resultLabel.ForeColor = Color.Black;
             GenerateAll3Images();
-
-            // get play results
-            resultLabel.Text = GetPlayResults(GetImageResults(image1), GetImageResults(image2), GetImageResults(image3));
-            // display play result
+            DisplayPlayResultLabel();
 
             // display player's cash count
         }
@@ -68,9 +95,30 @@ namespace SlotMachine
             return "~/Images/Bar.png";
         }
 
+        [SuppressMessage("ReSharper", "ConvertIfStatementToConditionalTernaryExpression")]
         private void DisplayPlayResultLabel()
         {
+            decimal bet = decimal.Parse(betTextBox.Text);
+            var playResult =
+                GetPlayResults(GetImageResults(image1), GetImageResults(image2), GetImageResults(image3));
+            if (playResult == "bust")
+                resultLabel.Text = $"Sorry, you lost {CalculateLoss():C}. Better luck next time.";
+            else
+                resultLabel.Text = $"You bet {bet:C} and won {bet * CalculateMultiplier(playResult):C}!";
+        }
 
+        private decimal CalculateMultiplier(string playResult)
+        {
+            if (playResult == "Jackpot") return 100m;
+            if (playResult == "2X") return 2m;
+            if (playResult == "3X") return 3m;
+            if (playResult == "4X") return 4m;
+            return 1m;
+        }
+
+        private decimal CalculateLoss()
+        {
+            return decimal.Parse(betTextBox.Text);
         }
 
         private string GetImageResults(Image imageToCheck)
