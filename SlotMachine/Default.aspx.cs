@@ -10,19 +10,41 @@ namespace SlotMachine
     public partial class Default : System.Web.UI.Page
     {
         private readonly Random _random = new Random();
+        private decimal playersMoney = 100m;
+
         protected void Page_Load(object sender, EventArgs e)
+        {
+            if (!Page.IsPostBack)
+            {
+                GenerateAll3Images();
+                moneyLabel.Text = $"Player's money: {playersMoney:C}";
+            }
+        }
+
+        protected void pullLeverButton_Click(object sender, EventArgs e)
+        {
+            PullLever();
+        }
+
+        //Helper Methods
+        private void PullLever()
+        {
+            // randomly generate 3 images
+            GenerateAll3Images();
+
+            // get play results
+            resultLabel.Text = GetPlayResults(GetImageResults(image1), GetImageResults(image2), GetImageResults(image3));
+            // display play result
+
+            // display player's cash count
+        }
+
+        private void GenerateAll3Images()
         {
             GenerateImage(image1);
             GenerateImage(image2);
             GenerateImage(image3);
         }
-
-        private void PullLever()
-        {
-            // randomly generate 3 images
-
-        }
-
         private void GenerateImage(Image targetImage)
         {
             var imageNumber = _random.Next(1, 13);
@@ -44,6 +66,77 @@ namespace SlotMachine
             if (imageNumber == 11) return "~/Images/Strawberry.png";
             if (imageNumber == 12) return "~/Images/Watermelon.png";
             return "~/Images/Bar.png";
+        }
+
+        private void DisplayPlayResultLabel()
+        {
+
+        }
+
+        private string GetImageResults(Image imageToCheck)
+        {
+            if (imageToCheck.ImageUrl == "~/Images/Bar.png")
+                return "bar";
+            if (imageToCheck.ImageUrl == "~/Images/Cherry.png")
+                return "cherry";
+            if (imageToCheck.ImageUrl == "~/Images/Seven.png")
+                return "seven";
+            return "other";
+        }
+
+        private string GetPlayResults(string image1Result, string image2Result, string image3Result)
+        {
+            int cherryCount = CherryCount(image1Result, image2Result, image3Result);
+            int sevenCount = SevenCount(image1Result, image2Result, image3Result);
+            int barCount = BarCount(image1Result, image2Result, image3Result);
+
+            return AnalyzeCounts(cherryCount, sevenCount, barCount);
+        }
+
+        private string AnalyzeCounts(int cherryCount, int sevenCount, int barCount)
+        {
+            if (sevenCount == 3) return "Jackpot";
+            if (barCount > 0) return "bust";
+            return AnalyzeCherryCounts(cherryCount);
+
+        }
+
+        private string AnalyzeCherryCounts(int cherryCount)
+        {
+            if (cherryCount == 1) return "2X";
+            if (cherryCount == 2) return "3X";
+            if (cherryCount == 3) return "4X";
+            return "bust";
+        }
+
+        private int CherryCount(string image1Result, string image2Result, string image3Result)
+        {
+            var cherryCount = 0;
+            if (image1Result == "cherry") cherryCount++;
+            if (image2Result == "cherry") cherryCount++;
+            if (image3Result == "cherry") cherryCount++;
+
+            return cherryCount;
+        }
+
+        private int BarCount(string image1Result, string image2Result, string image3Result)
+        {
+            var barCount = 0;
+            if (image1Result == "bar") barCount++;
+            if (image2Result == "bar") barCount++;
+            if (image3Result == "bar") barCount++;
+
+            return barCount;
+        }
+
+        private int SevenCount(string image1Result, string image2Result, string image3Result)
+        {
+            var sevenCount = 0;
+            if (image1Result == "seven") sevenCount++;
+            if (image2Result == "seven") sevenCount++;
+            if (image3Result == "seven") sevenCount++;
+
+            return sevenCount;
         }
     }
 }
