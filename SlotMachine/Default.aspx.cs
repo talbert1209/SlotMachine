@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
+using System.Web.UI;
 using Image = System.Web.UI.WebControls.Image;
 
 namespace SlotMachine
 {
-    public partial class Default : System.Web.UI.Page
+    public partial class Default : Page
     {
         private readonly Random _random = new Random();
-        private decimal playersMoney = 100m;
+        private readonly decimal playersMoney = 100m;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -22,43 +23,11 @@ namespace SlotMachine
 
         protected void pullLeverButton_Click(object sender, EventArgs e)
         {
-            if (!VerifyBet())
-            {
-                return;
-            }
+            if (!VerifyBet()) return;
             PullLever();
-            CalculatePlayersCash();
-            DisplayPlayersCash();
         }
 
         // Helper Methods
-        private void DisplayPlayersCash()
-        {
-            moneyLabel.Text = $"Player's Money: {ViewState["PlayersMoney"]:C}";
-        }
-
-        private void CalculatePlayersCash()
-        {
-            var playResult = GetPlayResults(GetImageResults(image1), GetImageResults(image2), GetImageResults(image3));
-            var currentCash = decimal.Parse(ViewState["PlayersMoney"].ToString());
-        
-            if (DidPlayerWin())
-            {
-                currentCash += CalculateWinnings(playResult);
-                ViewState.Add("PlayersMoney", currentCash);
-            }
-            else
-            {
-                currentCash -= decimal.Parse(betTextBox.Text);
-                ViewState.Add("PlayersMoney", currentCash);
-            }
-        }
-
-        private bool VerifyBetIsMoney()
-        {
-            return decimal.TryParse(betTextBox.Text, out _);
-        }
-
         private bool VerifyBet()
         {
             resultLabel.ForeColor = Color.Red;
@@ -89,9 +58,37 @@ namespace SlotMachine
             resultLabel.ForeColor = Color.Black;
             GenerateAll3Images();
             DisplayPlayResultLabel();
-
-            // display player's cash count
+            CalculatePlayersCash();
+            DisplayPlayersCash();
         }
+
+        private void DisplayPlayersCash()
+        {
+            moneyLabel.Text = $"Player's Money: {ViewState["PlayersMoney"]:C}";
+        }
+
+        private void CalculatePlayersCash()
+        {
+            var playResult = GetPlayResults(GetImageResults(image1), GetImageResults(image2), GetImageResults(image3));
+            var currentCash = decimal.Parse(ViewState["PlayersMoney"].ToString());
+
+            if (DidPlayerWin())
+            {
+                currentCash += CalculateWinnings(playResult);
+                ViewState.Add("PlayersMoney", currentCash);
+            }
+            else
+            {
+                currentCash -= decimal.Parse(betTextBox.Text);
+                ViewState.Add("PlayersMoney", currentCash);
+            }
+        }
+
+        private bool VerifyBetIsMoney()
+        {
+            return decimal.TryParse(betTextBox.Text, out _);
+        }
+
 
         private void GenerateAll3Images()
         {
@@ -99,6 +96,7 @@ namespace SlotMachine
             GenerateImage(image2);
             GenerateImage(image3);
         }
+
         private void GenerateImage(Image targetImage)
         {
             var imageNumber = _random.Next(1, 13);
@@ -125,7 +123,7 @@ namespace SlotMachine
         [SuppressMessage("ReSharper", "ConvertIfStatementToConditionalTernaryExpression")]
         private void DisplayPlayResultLabel()
         {
-            decimal bet = decimal.Parse(betTextBox.Text);
+            var bet = decimal.Parse(betTextBox.Text);
             var playResult = GetPlayResults(GetImageResults(image1), GetImageResults(image2), GetImageResults(image3));
 
             if (!DidPlayerWin())
@@ -136,7 +134,7 @@ namespace SlotMachine
 
         private decimal CalculateWinnings(string playResult)
         {
-            decimal bet = decimal.Parse(betTextBox.Text);
+            var bet = decimal.Parse(betTextBox.Text);
             return bet * CalculateMultiplier(playResult);
         }
 
@@ -176,9 +174,9 @@ namespace SlotMachine
 
         private string GetPlayResults(string image1Result, string image2Result, string image3Result)
         {
-            int cherryCount = CherryCount(image1Result, image2Result, image3Result);
-            int sevenCount = SevenCount(image1Result, image2Result, image3Result);
-            int barCount = BarCount(image1Result, image2Result, image3Result);
+            var cherryCount = CherryCount(image1Result, image2Result, image3Result);
+            var sevenCount = SevenCount(image1Result, image2Result, image3Result);
+            var barCount = BarCount(image1Result, image2Result, image3Result);
 
             return AnalyzeCounts(cherryCount, sevenCount, barCount);
         }
@@ -188,7 +186,6 @@ namespace SlotMachine
             if (sevenCount == 3) return "Jackpot";
             if (barCount > 0) return "bust";
             return AnalyzeCherryCounts(cherryCount);
-
         }
 
         private string AnalyzeCherryCounts(int cherryCount)
@@ -196,6 +193,7 @@ namespace SlotMachine
             if (cherryCount == 1) return "2X";
             if (cherryCount == 2) return "3X";
             if (cherryCount == 3) return "4X";
+
             return "bust";
         }
 
