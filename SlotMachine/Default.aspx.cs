@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
 using Image = System.Web.UI.WebControls.Image;
 
 namespace SlotMachine
@@ -20,6 +16,7 @@ namespace SlotMachine
             {
                 GenerateAll3Images();
                 moneyLabel.Text = $"Player's money: {playersMoney:C}";
+                ViewState.Add("PlayersMoney", playersMoney);
             }
         }
 
@@ -30,12 +27,36 @@ namespace SlotMachine
                 return;
             }
             PullLever();
+            CalculatePlayersCash();
+            DisplayPlayersCash();
         }
-        
+
         // Helper Methods
+        private void DisplayPlayersCash()
+        {
+            moneyLabel.Text = $"Player's Money: {ViewState["PlayersMoney"]:C}";
+        }
+
+        private void CalculatePlayersCash()
+        {
+            var playResult = GetPlayResults(GetImageResults(image1), GetImageResults(image2), GetImageResults(image3));
+            var currentCash = decimal.Parse(ViewState["PlayersMoney"].ToString());
+        
+            if (DidPlayerWin())
+            {
+                currentCash += CalculateWinnings(playResult);
+                ViewState.Add("PlayersMoney", currentCash);
+            }
+            else
+            {
+                currentCash -= decimal.Parse(betTextBox.Text);
+                ViewState.Add("PlayersMoney", currentCash);
+            }
+        }
+
         private bool VerifyBetIsMoney()
         {
-            return decimal.TryParse(betTextBox.Text, out var betResult);
+            return decimal.TryParse(betTextBox.Text, out _);
         }
 
         private bool VerifyBet()
@@ -47,10 +68,16 @@ namespace SlotMachine
                 return false;
             }
 
-            if (decimal.Parse(betTextBox.Text) > playersMoney)
+            if (decimal.Parse(ViewState["PlayersMoney"].ToString()) == 0)
+            {
+                resultLabel.Text = "Get out of here, you don't have any money!";
+                return false;
+            }
+
+            if (decimal.Parse(betTextBox.Text) > decimal.Parse(ViewState["PlayersMoney"].ToString()))
             {
                 resultLabel.Text =
-                    $"You don't have {decimal.Parse(betTextBox.Text):C} to bet. Please enter an amount less than {playersMoney:C}";
+                    $"You don't have {decimal.Parse(betTextBox.Text):C} to bet. Please enter an amount less than {ViewState["PlayersMoney"]:C}";
                 return false;
             }
 
@@ -99,12 +126,27 @@ namespace SlotMachine
         private void DisplayPlayResultLabel()
         {
             decimal bet = decimal.Parse(betTextBox.Text);
-            var playResult =
-                GetPlayResults(GetImageResults(image1), GetImageResults(image2), GetImageResults(image3));
-            if (playResult == "bust")
+            var playResult = GetPlayResults(GetImageResults(image1), GetImageResults(image2), GetImageResults(image3));
+
+            if (!DidPlayerWin())
                 resultLabel.Text = $"Sorry, you lost {CalculateLoss():C}. Better luck next time.";
             else
-                resultLabel.Text = $"You bet {bet:C} and won {bet * CalculateMultiplier(playResult):C}!";
+                resultLabel.Text = $"You bet {bet:C} and won {CalculateWinnings(playResult):C}!";
+        }
+
+        private decimal CalculateWinnings(string playResult)
+        {
+            decimal bet = decimal.Parse(betTextBox.Text);
+            return bet * CalculateMultiplier(playResult);
+        }
+
+        private bool DidPlayerWin()
+        {
+            var playResult =
+                GetPlayResults(GetImageResults(image1), GetImageResults(image2), GetImageResults(image3));
+            if (playResult == "bust") return false;
+
+            return true;
         }
 
         private decimal CalculateMultiplier(string playResult)
